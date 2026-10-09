@@ -3,4 +3,4 @@ Allow: /
 Disallow: /tools/
 Disallow: /node_modules/
 
-Sitemap: __SITE_URL__/sitemap.xml
+Sitemap: https://darkcyan-falcon-706043.hostingersite.com/sitemap.xml

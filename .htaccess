@@ -1,0 +1,71 @@
+# Incisors Med - static site (Apache/LiteSpeed on Hostinger)
+# The whole repository is published into public_html, so the rules below also keep the
+# repo's own files (sources, config, docs) off the web.
+
+Options -Indexes
+DirectoryIndex index.html
+
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS. Hostinger's hPanel "Force HTTPS" toggle already does this once SSL is
+  # installed; enabling both can loop behind a TLS-terminating proxy, so it ships off.
+  # Uncomment ONLY if hPanel's toggle is unavailable.
+  # RewriteCond %{HTTPS} !=on
+  # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # Never serve dot-files (.git, .env, ...) but keep ACME/SSL validation reachable
+  RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+  # Never serve the repository's own sources and tooling
+  RewriteRule ^(tools|node_modules)/ - [F,L]
+  RedirectMatch 404 ^/(package\.json|package-lock\.json|tailwind\.config\.js|README\.md|DEPLOY\.md|\.gitattributes|\.gitignore)$
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/xml application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  # HTML is always revalidated: a cached page hides a deploy
+  ExpiresByType text/html "access plus 0 seconds"
+  # the stylesheet/script carry ?v=<hash> query strings from the build
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/avif .avif
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+</IfModule>
+
+# Recognise the redirect shapes used by the old Stitch single page (in-page anchors are
+# served by index.html itself; these only catch stale external links).
+<IfModule mod_rewrite.c>
+  RewriteRule ^index\.html$ / [R=301,L]
+</IfModule>
+
+# If anything here breaks the site (500), renaming this file to .htaccess.off restores it.
